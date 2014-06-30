@@ -39,7 +39,7 @@ class Spec2AuctionSniperEndToEndTest extends Specification {
   "Auction Sniper" should {
     sequential
 
-    "join auction and lost it after auction closed" in new AuctionAndApplication {
+    "join auction and loose it after auction closed" in new AuctionAndApplication {
       auction.startSellingItem
       application.startBiddingIn(auction)
       auction.hasReceivedJoinRequestFromSniper
