@@ -7,10 +7,17 @@ import com.objogate.wl.swing.matcher.{JLabelTextMatcher, IterableComponentsMatch
 import org.hamcrest.{Matchers, Matcher}
 import org.hamcrest.Matchers.equalTo
 
+
+object ApplicationRunner {
+  //val SNIPER_XMPP_ID = "sniper"
+  val SNIPER_XMPP_ID = "sniper@slavans-macbook-pro.local/Smack"
+}
+
 class ApplicationRunner {
-  private val SNIPER_ID = "sniper"
-  private val SNIPER_PASSWORD = "1234"
+
   private val XMPP_HOSTNAME = "localhost"
+  private val SNIPER_USER = "sniper"
+  private val SNIPER_PASSWORD = "1234"
 
   var driver: AuctionSniperDriver = null
 
@@ -18,7 +25,8 @@ class ApplicationRunner {
     val t = new Thread("Test Application") {
       override def run {
         try {
-          Main.main(Array(XMPP_HOSTNAME, SNIPER_ID, SNIPER_PASSWORD, auction.itemId))
+          val mainApp = new Main
+          mainApp.main(Array(XMPP_HOSTNAME, SNIPER_USER, SNIPER_PASSWORD, auction.itemId))
         }
         catch {
           case e:Exception => e.printStackTrace()
@@ -33,6 +41,10 @@ class ApplicationRunner {
 
   def showsSniperHastLostAuction() {
     driver.showsSniperStatus(Main.STATUS_LOST)
+  }
+
+  def hasShownSniperIsBidding() {
+    driver.showsSniperStatus(Main.STATUS_BIDDING)
   }
 
   def stop() {

@@ -1,7 +1,11 @@
 package com.wix.slava.sniper
 
-import org.specs2.mutable.Specification
-import org.specs2.specification.{Scope, After}
+//import org.specs2.mutable.Specification
+//import org.specs2.specification.{Scope, After}
+
+import org.specs2.mutable.{After, Specification}
+import org.specs2.specification.Scope
+
 
 /*class AuctionSniperEndToEndTest {
   val auction = new FakeAuctionServer("item-54321")
@@ -18,13 +22,13 @@ import org.specs2.specification.{Scope, After}
 }
 */
 
-class Spec2AuctionSniperEndToEndTest extends Specification {
+class AuctionSniperEndToEndTestTest extends Specification {
 
-  trait AuctionAndApplication extends After {
-    val auction = new FakeAuctionServer("item-54321")
+  trait AuctionAndApplication extends Scope with After {
     val application = new ApplicationRunner()
+    val auction = new FakeAuctionServer("item-54321")
 
-    override def after: Any = {
+    def after = {
       auction.stop()
       application.stop()
     }
@@ -34,23 +38,27 @@ class Spec2AuctionSniperEndToEndTest extends Specification {
     sequential
 
     "join auction and loose it after auction closed" in new AuctionAndApplication {
+
       auction.startSellingItem
       application.startBiddingIn(auction)
-      auction.hasReceivedJoinRequestFromSniper
+      auction.hasReceivedJoinRequestFromSniper(ApplicationRunner.SNIPER_XMPP_ID)
       auction.announceClosed
       application.showsSniperHastLostAuction
     }
 
-    /*
-    "join again auction and lost it after auction closed" in new AuctionAndApplication {
+
+    "make higher bid and loose" in new AuctionAndApplication {
 
       auction.startSellingItem
       application.startBiddingIn(auction)
-      auction.hasReceivedJoinRequestFromSniper
+      auction.hasReceivedJoinRequestFromSniper(ApplicationRunner.SNIPER_XMPP_ID)
+
+      auction.reportPrice(1000, 98, "other bidder")
+      application.hasShownSniperIsBidding
+      auction.hasReceivedBid(1098, ApplicationRunner.SNIPER_XMPP_ID)
+
       auction.announceClosed
       application.showsSniperHastLostAuction
     }
-    */
   }
-
 }

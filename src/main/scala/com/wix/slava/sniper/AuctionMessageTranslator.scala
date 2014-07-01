@@ -5,13 +5,13 @@ import org.jivesoftware.smack.{Chat, MessageListener}
 
 
 trait AuctionEventListener {
-  def auctionClosed { println("auctionClosed")}
-  def currentPrice(price: Int, increment: Int) {}
+  def auctionClosed
+  def currentPrice(price: Int, increment: Int)
 }
 
 
 
-class AuctionMessageTranslator(listener:AuctionEventListener) extends MessageListener {
+class AuctionMessageTranslator(private val listener:AuctionEventListener) extends MessageListener {
 
   def processMessage(chat: Chat, message: Message) {
     val event = unpackEventFrom(message)

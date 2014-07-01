@@ -2,11 +2,13 @@ package com.wix.slava.sniper
 
 import java.util.concurrent.{TimeUnit, ArrayBlockingQueue}
 
+import org.hamcrest.{Matcher, Matchers}
 import org.jivesoftware.smack._
 import org.jivesoftware.smack.packet.Message
 import org.hamcrest.MatcherAssert._
 import org.hamcrest.Matchers.notNullValue
 import org.hamcrest.Matchers.is
+import org.hamcrest.Matchers.equalTo
 
 case class FakeAuctionServer(itemId : String) {
 
@@ -30,12 +32,28 @@ case class FakeAuctionServer(itemId : String) {
       }
     })
   }
-  def hasReceivedJoinRequestFromSniper {
-    msgListener.receivesAMessage
+
+  def reportPrice(price: Int, increment: Int, bidder: String) {
+    currentChat.sendMessage("SQLVersion: 1.1; Event: PRICE; CurrentPrice: %d; Increment: %d; Bidder: %s;".format(price,
+    increment, bidder))
+  }
+
+  def hasReceivedJoinRequestFromSniper(sniperId:String) {
+    receivedAMessageMatching(sniperId, equalTo(Main.JOIN_COMMAND_FORMAT))
+  }
+
+  def hasReceivedBid(bid: Int, sniperId:String) {
+    assertThat(currentChat.getParticipant, equalTo(sniperId))
+    receivedAMessageMatching(sniperId, equalTo(Main.BID_COMMAND_FORMAT.format(bid)))
+  }
+
+  private def receivedAMessageMatching(sniperId: String, msgMatcher: Matcher[String]) {
+    msgListener.receivesAMessage(msgMatcher)
+    assertThat(currentChat.getParticipant, equalTo(sniperId))
   }
 
   def announceClosed {
-    currentChat.sendMessage(new Message())
+    currentChat.sendMessage("SQLVersion: 1.1; Event: CLOSE;")
   }
 
   def stop() {
@@ -51,7 +69,9 @@ class SingleMessageListener extends MessageListener {
     messages.add(message)
   }
 
-  def receivesAMessage {
-    assertThat("Expected message", messages.poll(5, TimeUnit.SECONDS), is(notNullValue()))
+  def receivesAMessage(msgMatcher: Matcher[String]) {
+    val message = messages.poll(5, TimeUnit.SECONDS)
+    assertThat("Expected message", message, is(notNullValue()))
+    assertThat("Message", message.getBody(), msgMatcher)
   }
 }
