@@ -10,12 +10,16 @@ object Main {
   val STATUS_JOINING: String = "Joining"
   val STATUS_LOST: String = "Lost"
   val STATUS_BIDDING = "Bidding"
+  val STATUS_WINNING = "Winning"
+  val STATUS_WON = "Won"
 
   val JOIN_COMMAND_FORMAT = "SQL Version: 1.1; Command: JOIN;"
   val BID_COMMAND_FORMAT = "SQL Version: 1.1; Command: BID; Price: %d;"
+
+  val SNIPER_ID = "SlavaSniper"
 }
 
-class Main extends SniperListener {
+class Main {
 
   val ARG_HOSTNAME = 0
   val ARG_USERNAME = 1
@@ -35,35 +39,17 @@ class Main extends SniperListener {
     joinAuction(conn,args(ARG_ITEM_ID))
   }
 
-  override def sniperLost {
-    SwingUtilities.invokeLater(new Runnable {
-      override def run(): Unit = {
-        ui.showStatus(Main.STATUS_LOST)
-      }
-    })
-  }
 
-  override def sniperBidding {
-    SwingUtilities.invokeLater(new Runnable {
-      override def run(): Unit = {
-        ui.showStatus(Main.STATUS_BIDDING)
-      }
-    })
-  }
 
   private def joinAuction(conn:XMPPConnection, itemId:String) {
 
     val chat = conn.getChatManager.createChat(auctionId(itemId,conn), null)
     notToBeGCed = chat
 
-    val auction = new Auction {
-      override def bid(price:Int) {
-        chat.sendMessage(Main.BID_COMMAND_FORMAT.format(price))
-      }
-    }
-
-    chat.addMessageListener( new AuctionMessageTranslator(new AuctionSniper(auction, this)))
-    chat.sendMessage(Main.JOIN_COMMAND_FORMAT)
+    val auction = new XMPPAuction(chat)
+    auction.join
+    chat.addMessageListener( new AuctionMessageTranslator(conn.getUser,
+      new AuctionSniper(auction, new SniperStateDisplayer(ui))))
    }
 
 

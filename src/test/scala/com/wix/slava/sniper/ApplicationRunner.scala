@@ -47,6 +47,14 @@ class ApplicationRunner {
     driver.showsSniperStatus(Main.STATUS_BIDDING)
   }
 
+  def hasShownSniperIsWinning {
+    driver.showsSniperStatus(Main.STATUS_WINNING)
+  }
+
+  def showsSniperHastWonAuction() {
+    driver.showsSniperStatus(Main.STATUS_WON)
+  }
+
   def stop() {
     if (driver != null)
       driver.dispose()
