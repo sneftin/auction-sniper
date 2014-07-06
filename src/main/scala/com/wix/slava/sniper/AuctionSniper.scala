@@ -3,37 +3,56 @@ package com.wix.slava.sniper
 import com.wix.slava.sniper.PriceSourceEnum._
 
 trait SniperListener {
-  def sniperLost
-  def sniperBidding
-  def sniperWinning
-  def sniperWon
+  def sniperStateChanged(state:SniperSnapshot)
 }
 
-class AuctionSniper(auction:Auction, sniperListener:SniperListener) extends AuctionEventListener {
+object SniperState extends Enumeration {
+  val Joining = Value
+  val Bidding = Value
+  val Winning = Value
+  val Lost = Value
+  val Won = Value
+}
 
-  var isWining = false
+case class SniperSnapshot(itemId:String, lastPrice:Int, lastBid:Int, state:SniperState.Value) {
+  def bidding(newLastPrice:Int, newLastBid:Int) = SniperSnapshot(itemId, newLastPrice, newLastBid, SniperState.Bidding)
+  def winning(newLastPrice:Int) = SniperSnapshot(itemId, newLastPrice, lastBid, SniperState.Winning)
+  def closed = SniperSnapshot(itemId, lastPrice, lastBid,
+    state match {
+      case SniperState.Winning  => SniperState.Won
+      case SniperState.Joining | SniperState.Bidding => SniperState.Lost
+      case _ => throw new Exception("Auction is already closed")
+    })
+
+}
+
+object SniperSnapshot {
+  def joining(itemId: String) = SniperSnapshot(itemId, 0, 0, SniperState.Joining)
+}
+
+class AuctionSniper(itemId:String, auction:Auction, sniperListener:SniperListener) extends AuctionEventListener {
+
+  var snapshot = SniperSnapshot.joining(itemId)
+  notifyChange
 
   override def auctionClosed {
-    if (isWining)
-      sniperListener.sniperWon
-    else
-      sniperListener.sniperLost
+    snapshot = snapshot.closed
+    notifyChange
   }
 
   override def currentPrice(price:Int, increment:Int, priceSource:PriceSource) {
-    isWining = (priceSource == FromSniper)
-    if (isWining)
-      sniperListener.sniperWinning
-    else {
-      auction.bid(price+increment)
-      sniperListener.sniperBidding
-    }
-    /*priceSource match {
-      case FromSniper => { sniperListener.sniperWinning }
+    priceSource match {
+      case FromSniper => snapshot = snapshot.winning(price)
       case FromOtherBidder => {
-        auction.bid(price+increment)
-        sniperListener.sniperBidding
+        val bid = price + increment
+        auction.bid(bid)
+        snapshot = snapshot.bidding(price, bid)
       }
-    }*/
+    }
+    notifyChange
+  }
+
+  private def notifyChange {
+    sniperListener.sniperStateChanged(snapshot)
   }
 }

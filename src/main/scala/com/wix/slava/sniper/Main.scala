@@ -6,6 +6,8 @@ import javax.swing.SwingUtilities
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smack.{Chat, MessageListener, XMPPConnection}
 
+import scala.collection.mutable
+
 object Main {
   val STATUS_JOINING: String = "Joining"
   val STATUS_LOST: String = "Lost"
@@ -30,28 +32,32 @@ class Main {
   val ITEM_ID_AS_LOGIN = "auction-%s"
   val AUCTION_ID_FORMAT = ITEM_ID_AS_LOGIN + "@%s/" + AUCTION_RESOURCE
 
+  val snipers = new SnipersTableModel
   var ui: MainWindow = null
-  var notToBeGCed: Chat = null
+  var notToBeGCed = mutable.MutableList[Chat]()
 
   def main(args: Array[String]) {
-    val conn = connectTo(args(ARG_HOSTNAME), args(ARG_USERNAME), args(ARG_PASSWORD))
-    startUserInterface(conn)
-    joinAuction(conn,args(ARG_ITEM_ID))
+    val connection = connectTo(args(ARG_HOSTNAME), args(ARG_USERNAME), args(ARG_PASSWORD))
+    startUserInterface
+    disconnectWhenUICloses(connection)
+    addUserRequestListenerFor(connection)
+    //for (i <- 3 to args.length-1)
+    //  joinAuction(connection, args(i))
   }
 
-
-
-  private def joinAuction(conn:XMPPConnection, itemId:String) {
-
-    val chat = conn.getChatManager.createChat(auctionId(itemId,conn), null)
-    notToBeGCed = chat
-
-    val auction = new XMPPAuction(chat)
-    auction.join
-    chat.addMessageListener( new AuctionMessageTranslator(conn.getUser,
-      new AuctionSniper(auction, new SniperStateDisplayer(ui))))
-   }
-
+  private def addUserRequestListenerFor(conn:XMPPConnection) {
+    ui.addUserRequestListener(new UserRequestListener {
+      override def joinAuction(itemId: String) {
+        snipers.addSniper(SniperSnapshot.joining(itemId))
+        val chat = conn.getChatManager.createChat(auctionId(itemId,conn), null)
+        notToBeGCed += chat
+        val auction = new XMPPAuction(chat)
+        chat.addMessageListener( new AuctionMessageTranslator(conn.getUser,
+          new AuctionSniper(itemId, auction, new SwingThreadSniperListener(snipers))))
+        auction.join
+      }
+    })
+  }
 
   private def connectTo(host:String, user:String, pass:String) : XMPPConnection = {
     val conn = new XMPPConnection(host)
@@ -64,11 +70,10 @@ class Main {
     AUCTION_ID_FORMAT.format(itemId, conn.getServiceName)
   }
 
-  private def startUserInterface(conn:XMPPConnection) {
+  private def startUserInterface {
     SwingUtilities.invokeAndWait(new Runnable {
       override def run(): Unit = {
-        ui = new MainWindow()
-        disconnectWhenUICloses(conn)
+        ui = new MainWindow(snipers)
       }
     })
   }
