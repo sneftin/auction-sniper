@@ -1,11 +1,12 @@
-package com.wix.slava.sniper
+package com.wix.slava.sniper.ui
 
 import java.awt.event.{ActionEvent, ActionListener}
-import java.awt.{FlowLayout, BorderLayout, Color}
+import java.awt.{BorderLayout, FlowLayout}
 import java.util.EventListener
-import javax.swing.border.LineBorder
-import javax.swing.table.AbstractTableModel
 import javax.swing._
+import javax.swing.table.AbstractTableModel
+
+import com.wix.slava.sniper.{SniperState, SniperListener, SniperSnapshot}
 
 
 trait UserRequestListener extends EventListener {

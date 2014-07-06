@@ -7,6 +7,7 @@ import com.objogate.wl.swing.AWTEventQueueProber
 import com.objogate.wl.swing.driver._
 import com.objogate.wl.swing.gesture.GesturePerformer
 import com.objogate.wl.swing.matcher.{JLabelTextMatcher, IterableComponentsMatcher}
+import com.wix.slava.sniper.ui.MainWindow
 import org.hamcrest.{Matchers, Matcher}
 import org.hamcrest.Matchers.equalTo
 

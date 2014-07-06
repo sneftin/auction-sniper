@@ -3,7 +3,7 @@ package com.wix.slava.sniper
 import java.awt.event.{WindowEvent, WindowAdapter}
 import javax.swing.SwingUtilities
 
-import org.jivesoftware.smack.packet.Message
+import com.wix.slava.sniper.ui.{SwingThreadSniperListener, SnipersTableModel, UserRequestListener, MainWindow}
 import org.jivesoftware.smack.{Chat, MessageListener, XMPPConnection}
 
 import scala.collection.mutable

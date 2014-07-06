@@ -1,6 +1,8 @@
-package com.wix.slava.sniper
+package com.wix.slava.sniper.ui
 
 import javax.swing.SwingUtilities
+
+import com.wix.slava.sniper.{SniperListener, SniperSnapshot}
 
 class SwingThreadSniperListener(ui:SniperListener) extends SniperListener {
 

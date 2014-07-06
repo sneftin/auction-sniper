@@ -2,6 +2,7 @@ package com.wix.slava.sniper
 
 import javax.swing.event.{TableModelEvent, TableModelListener}
 
+import com.wix.slava.sniper.ui.{Column, SnipersTableModel}
 import org.specs2.matcher.Matcher
 import org.specs2.mock.Mockito
 import org.specs2.mutable.{Before, Specification}

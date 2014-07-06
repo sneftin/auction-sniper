@@ -1,6 +1,7 @@
 package com.wix.slava.sniper
 
 import com.objogate.wl.swing.probe.ValueMatcherProbe
+import com.wix.slava.sniper.ui.{SnipersTableModel, UserRequestListener, MainWindow}
 import org.hamcrest.Matchers
 import org.specs2.mutable.{After, Specification}
 import org.specs2.specification.Scope
