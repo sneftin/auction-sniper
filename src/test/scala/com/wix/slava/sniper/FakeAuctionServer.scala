@@ -10,14 +10,18 @@ import org.hamcrest.Matchers.notNullValue
 import org.hamcrest.Matchers.is
 import org.hamcrest.Matchers.equalTo
 
+object FakeAuctionServer {
+  val XMPP_HOSTNAME = "localhost"
+}
+
 case class FakeAuctionServer(itemId : String) {
+
 
   val AUCTION_USER_AS_ITEM_ID = "auction-%s"
   val AUCTION_RESOURCE = "Auction"
-  val XMPP_HOSTNAME = "localhost"
   val AUCTION_PASSWORD = "1234"
   
-  val conn = new XMPPConnection(XMPP_HOSTNAME)
+  val conn = new XMPPConnection(FakeAuctionServer.XMPP_HOSTNAME)
   var currentChat:Chat = null
 
   val msgListener = new SingleMessageListener()
@@ -38,6 +42,11 @@ case class FakeAuctionServer(itemId : String) {
     increment, bidder))
   }
 
+  def sendInvalidMessageContaining(message: String) {
+    currentChat.sendMessage(message)
+  }
+
+
   def hasReceivedJoinRequestFromSniper(sniperId:String) {
     receivedAMessageMatching(sniperId, equalTo(Main.JOIN_COMMAND_FORMAT))
   }
@@ -57,7 +66,8 @@ case class FakeAuctionServer(itemId : String) {
   }
 
   def stop() {
-    conn.disconnect()
+    if (conn.isConnected)
+      conn.disconnect()
   }
 }
 

@@ -1,22 +1,23 @@
-package com.wix.slava.sniper
-
-
-import org.specs2.matcher.{BeTrueMatcher, Matcher}
-import org.specs2.mock.Mockito
-import org.specs2.mutable.Specification
-import org.specs2.specification.{Then, Scope}
+package com.wix.slava.sniper.unit
 
 import com.wix.slava.sniper.PriceSourceEnum._
+import com.wix.slava.sniper.xmpp.Auction
+import com.wix.slava.sniper._
+import org.specs2.matcher.Matcher
+import org.specs2.mock.Mockito
+import org.specs2.mutable.Specification
+import org.specs2.specification.Scope
 
 
 class AuctionSniperTest extends Specification with Mockito {
 
-  val ITEM_ID = "12345"
+  val ITEM = new Item("12345",1234)
 
   trait Context extends Scope {
     val sniperListener = mock[SniperListener]
     val auction = mock[Auction]
-    val sniper = new AuctionSniper(ITEM_ID, auction, sniperListener)
+    val sniper = new AuctionSniper(ITEM, auction)
+    sniper.addSniperListener(sniperListener)
   }
 
   def beInState(state: String): Matcher[String] =
@@ -57,7 +58,7 @@ class AuctionSniperTest extends Specification with Mockito {
       val bid = price + increment
       sniper.currentPrice(price, increment, FromOtherBidder)
       there was one(auction).bid(price + increment)
-      there was atLeastOne(sniperListener).sniperStateChanged(new SniperSnapshot(ITEM_ID, price, bid, SniperState.Bidding))
+      there was atLeastOne(sniperListener).sniperStateChanged(new SniperSnapshot(ITEM.id, price, bid, SniperState.Bidding))
     }
   }
 
@@ -66,7 +67,7 @@ class AuctionSniperTest extends Specification with Mockito {
       sniper.currentPrice(123, 12, FromOtherBidder)
       there was atLeastOne(sniperListener).sniperStateChanged(aSniperThatIs(SniperState.Bidding))
       sniper.currentPrice(135, 45, FromSniper)
-      there was atLeastOne(sniperListener).sniperStateChanged(new SniperSnapshot(ITEM_ID,135,135,SniperState.Winning))
+      there was atLeastOne(sniperListener).sniperStateChanged(new SniperSnapshot(ITEM.id,135,135,SniperState.Winning))
     }
   }
 
@@ -78,4 +79,23 @@ class AuctionSniperTest extends Specification with Mockito {
     }
   }
 
+  "Auction Sniper" should {
+    "not bid and report losing is subsequent price is above stop limit" in new Context {
+
+      sniper.currentPrice(123, 45, FromOtherBidder)
+      there was one(sniperListener).sniperStateChanged(aSniperThatIs(SniperState.Bidding))
+      sniper.currentPrice(2345, 25, FromOtherBidder)
+      there was one(sniperListener).sniperStateChanged(aSniperThatIs(SniperState.Losing))
+    }
+  }
+
+  "Auction Sniper" should {
+    "reports failed if acution fails when bidding" in new Context {
+
+      sniper.currentPrice(123, 45, FromOtherBidder)
+      sniper.auctionFailed
+
+      there was one(sniperListener).sniperStateChanged(new SniperSnapshot(ITEM.id, 0, 0, SniperState.Failed))
+    }
+  }
 }

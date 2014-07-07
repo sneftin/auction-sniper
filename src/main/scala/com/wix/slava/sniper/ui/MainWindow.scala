@@ -6,14 +6,14 @@ import java.util.EventListener
 import javax.swing._
 import javax.swing.table.AbstractTableModel
 
-import com.wix.slava.sniper.{SniperState, SniperListener, SniperSnapshot}
+import com.wix.slava.sniper._
 
 
 trait UserRequestListener extends EventListener {
-  def joinAuction(itemId:String)
+  def joinAuction(item: Item)
 }
 
-class MainWindow (snipers:SnipersTableModel) extends JFrame("Auction Sniper") {
+class MainWindow (portfolio:SniperPortfolio) extends JFrame("Auction Sniper") {
 
   var userRequestListener: UserRequestListener = null
 
@@ -28,7 +28,9 @@ class MainWindow (snipers:SnipersTableModel) extends JFrame("Auction Sniper") {
   }
 
   private def makeSnipersTable : JTable = {
-    val t = new JTable(snipers)
+    val model = new SnipersTableModel
+    portfolio.setPortfoliioListener(model)
+    val t = new JTable(model)
     t.setName(MainWindow.SNIPERS_TABLE_NAME)
     return t
   }
@@ -48,11 +50,16 @@ class MainWindow (snipers:SnipersTableModel) extends JFrame("Auction Sniper") {
     itemIdField.setName(MainWindow.NEW_ITEM_ID_NAME)
     controls.add(itemIdField)
 
+    val itemStopPriceField = new JTextField()
+    itemStopPriceField.setColumns(25)
+    itemStopPriceField.setName(MainWindow.NEW_ITEM_STOP_PRICE_NAME)
+    controls.add(itemStopPriceField)
+
     val joinAuctionButton = new JButton("Join Auction")
     joinAuctionButton.setName(MainWindow.JOIN_BUTTON_NAME)
     joinAuctionButton.addActionListener(new ActionListener(){
       def actionPerformed(e: ActionEvent) = {
-        userRequestListener.joinAuction(itemIdField.getText)
+        userRequestListener.joinAuction(new Item(itemIdField.getText, itemStopPriceField.getText.toInt))
       }
     })
     controls.add(joinAuctionButton)
@@ -66,21 +73,21 @@ class MainWindow (snipers:SnipersTableModel) extends JFrame("Auction Sniper") {
     return label
   }
   */
-  def sniperStatusChanged(sniperState:SniperSnapshot) {
-    snipers.sniperStateChanged(sniperState)
-  }
-
-
 }
 
-class SnipersTableModel extends AbstractTableModel with SniperListener {
+class SnipersTableModel extends AbstractTableModel with SniperListener with PortfolioListener {
 
   val STARTING_UP = new SniperSnapshot("344", 0, 0, SniperState.Joining)
-  val STATUS_TEXT = Array("Joining", "Bidding", "Winning", "Lost", "Won")
+  val STATUS_TEXT = Array("Joining", "Bidding", "Winning", "Lost", "Won", "Losing", "Failed" )
 
   var snapshots = Array[SniperSnapshot]()
 
-  def addSniper(snapshot: SniperSnapshot) {
+  override def sniperAdded(sniper:AuctionSniper) {
+    addSniperSnapshot(sniper.snapshot)
+    sniper.addSniperListener(new SwingThreadSniperListener(this))
+  }
+
+  def addSniperSnapshot(snapshot: SniperSnapshot) {
     val newSnapshots = new Array[SniperSnapshot](snapshots.size+1)
     Array.copy(snapshots, 0, newSnapshots, 0, snapshots.size)
     snapshots = newSnapshots
@@ -133,5 +140,6 @@ object MainWindow {
   val SNIPER_STATUS_NAME = "Status"
   val SNIPERS_TABLE_NAME = "Snipers Table"
   val NEW_ITEM_ID_NAME = "New Item"
+  val NEW_ITEM_STOP_PRICE_NAME = "New Item Stop Price"
   val JOIN_BUTTON_NAME = "Join"
 }

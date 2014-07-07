@@ -31,6 +31,7 @@ class AuctionSniperEndToEndTestTest extends Specification {
 
     def after = {
       auction.stop()
+      auction2.stop() // call stop if when not connected (there is a chaeck inside)
       application.stop()
     }
   }
@@ -104,6 +105,53 @@ class AuctionSniperEndToEndTestTest extends Specification {
 
       application.showsSniperHastWonAuction(auction,1098)
       application.showsSniperHastWonAuction(auction2,521)
+    }
+
+    "looses when price is too high" in new AuctionAndApplication {
+
+      auction.startSellingItem
+      application.startBiddingWithStopPrice(auction, 1100)
+      auction.hasReceivedJoinRequestFromSniper(ApplicationRunner.SNIPER_XMPP_ID)
+
+      auction.reportPrice(1000, 98, "other bidder")
+      application.hasShownSniperIsBidding(auction,1000,1098)
+      auction.hasReceivedBid(1098, ApplicationRunner.SNIPER_XMPP_ID)
+
+      auction.reportPrice(1197, 10, "third party")
+      application.hasShownSniperIsLosing(auction, 1197, 1098)
+      auction.reportPrice(1207, 10, "fourth party")
+      application.hasShownSniperIsLosing(auction, 1207, 1098)
+
+      auction.announceClosed
+      application.showsSniperHastLostAuction(auction, 1207, 1098)
+    }
+
+
+    "bids for multiple items" in new AuctionAndApplication {
+      val brokenMessage = "a broken message"
+      auction.startSellingItem
+      auction2.startSellingItem
+
+      application.startBiddingIn(auction, auction2)
+      auction.hasReceivedJoinRequestFromSniper(ApplicationRunner.SNIPER_XMPP_ID)
+
+      auction.reportPrice(500, 20, "other bidder")
+      auction.hasReceivedBid(520, ApplicationRunner.SNIPER_XMPP_ID)
+
+      auction.sendInvalidMessageContaining(brokenMessage)
+      application.showsSniperHasFailed(auction)
+
+      auction.reportPrice(521, 21, "other bidder")
+      waitForAnotherAuctionEvent
+
+      application.reportsInvalidMessage(auction, brokenMessage)
+      application.showsSniperHasFailed(auction)
+
+      def waitForAnotherAuctionEvent {
+        auction2.hasReceivedJoinRequestFromSniper(ApplicationRunner.SNIPER_XMPP_ID)
+        auction2.reportPrice(600, 6, "other bidder")
+        application.hasShownSniperIsBidding(auction2, 600, 606)
+      }
     }
 
   }

@@ -1,7 +1,8 @@
-package com.wix.slava.sniper
+package com.wix.slava.sniper.unit
 
 import javax.swing.event.{TableModelEvent, TableModelListener}
 
+import com.wix.slava.sniper.SniperSnapshot
 import com.wix.slava.sniper.ui.{Column, SnipersTableModel}
 import org.specs2.matcher.Matcher
 import org.specs2.mock.Mockito
@@ -40,7 +41,7 @@ class SnipersTableModelTest extends Specification with Mockito {
     "set sniper values in columns" in new Context {
       val joining = SniperSnapshot.joining("item id")
       val bidding = joining.bidding(555, 666)
-      model.addSniper(joining)
+      model.addSniperSnapshot(joining)
       model.sniperStateChanged(bidding)
 
       assertRowMatchesSnapshot(model, 0, bidding)
@@ -53,7 +54,7 @@ class SnipersTableModelTest extends Specification with Mockito {
     "notify listeners when sniper added" in new Context {
       val joining = SniperSnapshot.joining("item123")
       model.getRowCount must be equalTo 0
-      model.addSniper(joining)
+      model.addSniperSnapshot(joining)
       model.getRowCount must be equalTo 1
       assertRowMatchesSnapshot(model, 0, joining)
 
@@ -69,8 +70,8 @@ class SnipersTableModelTest extends Specification with Mockito {
   "SniperModel" should {
     "hold snipers in addition order" in new Context {
 
-      model.addSniper(SniperSnapshot.joining("item 0"))
-      model.addSniper(SniperSnapshot.joining("item 1"))
+      model.addSniperSnapshot(SniperSnapshot.joining("item 0"))
+      model.addSniperSnapshot(SniperSnapshot.joining("item 1"))
 
       model.getValueAt(0, Column.ItemIdentifier.id) must be equalTo ("item 0")
       model.getValueAt(1, Column.ItemIdentifier.id) must be equalTo ("item 1")
@@ -80,10 +81,10 @@ class SnipersTableModelTest extends Specification with Mockito {
   "SniperModel" should {
     "update correct row for sniper" in new Context {
 
-      model.addSniper(SniperSnapshot.joining("item 0"))
+      model.addSniperSnapshot(SniperSnapshot.joining("item 0"))
 
       val joining = SniperSnapshot.joining("item 1")
-      model.addSniper(joining)
+      model.addSniperSnapshot(joining)
       val bidding = joining.bidding(1,2)
 
       model.sniperStateChanged(bidding)
