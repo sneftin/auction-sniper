@@ -43,7 +43,7 @@ class AuctionSniper(item: Item, auction:Auction) extends AuctionEventListener {
   val listeners:Announcer[SniperListener] = Announcer.to[SniperListener](classOf[SniperListener])
 
   var snapshot = SniperSnapshot.joining(item.id)
-  notifyChange
+  //notifyChange
 
   def addSniperListener(listener: SniperListener) {
     listeners.addListener(listener)
