@@ -23,9 +23,12 @@ class SniperLauncherTest extends Specification with Mockito {
 
   "SniperLauncer" should {
     "add sniper to collection and then join auction" in new Context {
+
       val item =  new Item("item 123",1000)
+      auctionHouse.auctionFor(item) returns auction
+
       launcher.joinAuction(item)
-      //TODO: why this test is failing
+
       there was one(sniperCollector).addSniper(withSniperForItem(item.id))
       there was one(auction).addAuctionEventListener(withSniperForItem(item.id))
       there was one(auction).join
