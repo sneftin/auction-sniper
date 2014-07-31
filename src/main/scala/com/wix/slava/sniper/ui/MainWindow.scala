@@ -120,6 +120,7 @@ class SnipersTableModel extends AbstractTableModel with SniperListener with Port
   }
 }
 
+//TODO: not to use Enumeration
 object Column extends Enumeration {
   val ItemIdentifier = Value
   val LastPrice = Value

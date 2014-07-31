@@ -68,9 +68,10 @@ class AuctionMessageTranslator(sniperId:String, private val listener:AuctionEven
 
     def from(messageBody:String): AuctionEvent = {
       val event = new AuctionEvent
-      for (part <- messageBody.split(";")) {
+      messageBody.split(";").foreach(event.addField(_))
+      /*for (part <- messageBody.split(";")) {
         event.addField(part)
-      }
+      }*/
       return event
     }
   }

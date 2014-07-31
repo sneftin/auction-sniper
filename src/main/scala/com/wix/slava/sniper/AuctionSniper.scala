@@ -9,6 +9,7 @@ trait SniperListener extends EventListener {
   def sniperStateChanged(state:SniperSnapshot)
 }
 
+//TODO: Not to use Enumeration but sealed abstract case classes
 object SniperState extends Enumeration {
   val Joining = Value
   val Bidding = Value
